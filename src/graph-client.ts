@@ -53,6 +53,11 @@ interface GraphRequestOptions {
   [key: string]: unknown;
 }
 
+interface RawTextResponse {
+  message: 'OK!';
+  rawResponse: string;
+}
+
 interface ContentItem {
   type: 'text';
   text: string;
@@ -81,6 +86,17 @@ class GraphClient {
     this.authManager = authManager;
     this.secrets = secrets;
     this.outputFormat = outputFormat;
+  }
+
+  private isRawTextResponse(data: unknown): data is RawTextResponse {
+    return (
+      typeof data === 'object' &&
+      data !== null &&
+      'message' in data &&
+      'rawResponse' in data &&
+      (data as Record<string, unknown>).message === 'OK!' &&
+      typeof (data as Record<string, unknown>).rawResponse === 'string'
+    );
   }
 
   async makeRequest(endpoint: string, options: GraphRequestOptions = {}): Promise<unknown> {
@@ -284,6 +300,12 @@ class GraphClient {
 
     // Original handling for backward compatibility
     if (rawResponse) {
+      if (this.isRawTextResponse(data)) {
+        return {
+          content: [{ type: 'text', text: data.rawResponse }],
+        };
+      }
+
       return {
         content: [{ type: 'text', text: this.serializeData(data, this.outputFormat) }],
       };

@@ -155,6 +155,8 @@ CLAUDE.md
 # Claude and Serena working directories
 .claude/
 .serena/
+.codex
+.codex/
 
 # MCP configuration (contains sensitive keys)
 .mcp.json

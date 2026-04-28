@@ -104,4 +104,51 @@ describe('GraphClient binary response handling', () => {
       global.fetch = originalFetch;
     }
   });
+
+  it('returns plain text content directly for text/vtt raw responses', async () => {
+    const { default: GraphClient } = await import('../src/graph-client.js');
+
+    const vtt = `WEBVTT
+
+00:00:01.000 --> 00:00:04.000
+Speaker Name
+Spoken text here`;
+
+    const originalFetch = global.fetch;
+    global.fetch = (async () =>
+      new Response(vtt, {
+        status: 200,
+        headers: { 'content-type': 'text/vtt; charset=utf-8' },
+      })) as typeof fetch;
+
+    try {
+      const mockAuth = {
+        getToken: async () => 'fake-token',
+      };
+      const mockSecrets = {
+        clientId: 'x',
+        tenantId: 'common',
+        cloudType: 'global',
+      };
+      const client = new GraphClient(
+        mockAuth as Parameters<typeof GraphClient>[0],
+        mockSecrets as Parameters<typeof GraphClient>[1],
+        'json'
+      );
+
+      const result = await client.graphRequest(
+        '/me/onlineMeetings/meeting/transcripts/transcript/content',
+        {
+          rawResponse: true,
+          headers: { Accept: 'text/vtt' },
+        }
+      );
+
+      expect(result).toEqual({
+        content: [{ type: 'text', text: vtt }],
+      });
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
 });

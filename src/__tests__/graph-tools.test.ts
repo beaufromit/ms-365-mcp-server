@@ -582,4 +582,103 @@ describe('graph-tools', () => {
       expect(prefer === undefined || !prefer.includes('outlook.body-content-type')).toBe(true);
     });
   });
+
+  describe('meeting transcript content', () => {
+    it('should pass Accept: text/vtt and return readable VTT text', async () => {
+      const endpoint = makeEndpoint({
+        alias: 'get-meeting-transcript-content',
+        method: 'get',
+        path: '/me/onlineMeetings/:onlineMeetingId/transcripts/:callTranscriptId/content',
+        parameters: [
+          { name: 'onlineMeetingId', type: 'Path', schema: z.string() },
+          { name: 'callTranscriptId', type: 'Path', schema: z.string() },
+        ],
+      });
+      const config = makeConfig({
+        toolName: 'get-meeting-transcript-content',
+        pathPattern:
+          '/me/onlineMeetings/{onlineMeeting-id}/transcripts/{callTranscript-id}/content',
+        workScopes: ['OnlineMeetingTranscript.Read.All'],
+        scopes: undefined,
+        acceptType: 'text/vtt',
+      });
+      mockEndpoints.push(endpoint);
+      mockEndpointsJson = [config];
+
+      const vtt = `WEBVTT
+
+00:00:01.000 --> 00:00:04.000
+Speaker Name
+Spoken text here`;
+      const graphClient = createMockGraphClient([
+        {
+          content: [{ type: 'text', text: vtt }],
+        },
+      ]);
+
+      const server = createMockServer();
+      const { registerGraphTools } = await loadModule();
+      registerGraphTools(server as any, graphClient as any, false, undefined, true);
+
+      const tool = server.tools.get('get-meeting-transcript-content');
+      expect(tool).toBeDefined();
+
+      const result = await tool!.handler({
+        onlineMeetingId: 'meeting-123',
+        callTranscriptId: 'transcript-456',
+      });
+
+      const [requestedPath, options] = graphClient.graphRequest.mock.calls[0];
+      expect(requestedPath).toBe(
+        '/me/onlineMeetings/meeting-123/transcripts/transcript-456/content'
+      );
+      expect(options.headers['Accept']).toBe('text/vtt');
+      expect(options.rawResponse).toBe(true);
+      expect(result.content[0].text).toBe(vtt);
+    });
+
+    it('should only register transcript content tools in org mode', async () => {
+      const endpoint = makeEndpoint({
+        alias: 'get-meeting-transcript-content',
+        method: 'get',
+        path: '/me/onlineMeetings/:onlineMeetingId/transcripts/:callTranscriptId/content',
+        parameters: [
+          { name: 'onlineMeetingId', type: 'Path', schema: z.string() },
+          { name: 'callTranscriptId', type: 'Path', schema: z.string() },
+        ],
+      });
+      const config = makeConfig({
+        toolName: 'get-meeting-transcript-content',
+        pathPattern:
+          '/me/onlineMeetings/{onlineMeeting-id}/transcripts/{callTranscript-id}/content',
+        workScopes: ['OnlineMeetingTranscript.Read.All'],
+        scopes: undefined,
+        acceptType: 'text/vtt',
+      });
+      mockEndpoints.push(endpoint);
+      mockEndpointsJson = [config];
+
+      const { registerGraphTools } = await loadModule();
+
+      const personalModeServer = createMockServer();
+      registerGraphTools(
+        personalModeServer as any,
+        createMockGraphClient() as any,
+        false,
+        undefined,
+        false
+      );
+      expect(personalModeServer.tools.has('get-meeting-transcript-content')).toBe(false);
+
+      const orgModeServer = createMockServer();
+      registerGraphTools(
+        orgModeServer as any,
+        createMockGraphClient() as any,
+        false,
+        undefined,
+        true
+      );
+      expect(orgModeServer.tools.has('get-meeting-transcript-content')).toBe(true);
+    });
+  });
 });

@@ -104,6 +104,8 @@ Email (Outlook), Calendar, OneDrive Files, Excel, OneNote, To Do Tasks, Planner,
 
 Teams & Chats, Online Meetings, Transcripts & Recordings, Attendance Reports, SharePoint Sites & Lists, Shared Mailboxes & Calendars, User Management, Presence, Virtual Events
 
+`get-meeting-transcript-content` returns the transcript body as WebVTT text (`text/vtt`), not JSON. This is intentional so MCP clients can read the transcript content directly.
+
 ### Required Graph API Permissions
 
 Permissions are requested dynamically based on which tools are enabled. Use `--list-permissions` to see the exact permissions for your configuration:
