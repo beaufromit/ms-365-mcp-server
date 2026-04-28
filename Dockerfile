@@ -20,3 +20,4 @@ ENV NODE_ENV=production
 RUN npm i --ignore-scripts --omit=dev
 
 ENTRYPOINT ["node", "dist/index.js"]
+CMD ["--http", "3000", "--org-mode", "--preset", "work"]
