@@ -30,8 +30,10 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   },
   work: {
     name: 'work',
-    pattern: /team|channel|chat|sharepoint|planner|site|list|shared|search|query/i,
-    description: 'Organization/work tools (Teams, SharePoint, shared mailboxes, search)',
+    pattern:
+      /team|channel|chat|sharepoint|planner|site|list|shared|search|query|online-meeting|meeting|transcript|recording|attendance|presence|virtual-event|virtual/i,
+    description:
+      'Organization/work tools (Teams, meetings, transcripts, SharePoint, shared mailboxes, search)',
     requiresOrgMode: true,
   },
   excel: {
